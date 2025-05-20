@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <title>AI個人化學習論文導讀雙欄</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    :root {
+      --primary: #0055aa;
+      --bg: #f8f8f8;
+      --bg-dark: #20242a;
+      --text-dark: #f8f8f8;
+      --text: #222;
+      --toc-bg: #fafafa;
+      --border: #ccc;
+    }
+    [data-theme="dark"] {
+      --bg: #20242a;
+      --toc-bg: #292c33;
+      --text: #f8f8f8;
+      --border: #444;
+    }
+    html, body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: "Noto Sans TC", sans-serif;
+      margin: 0;
+      height: 100%;
+    }
+    .container {
+      display: flex;
+      height: 90vh;
+      min-height: 450px;
+    }
+    .left, .right {
+      height: 100%;
+      overflow-y: auto;
+    }
+    .left { width: 40%; padding: 1.3em 1.5em 2em 1.5em; background: var(--bg);}
+    .right { width: 60%; border-left: 1px solid var(--border); background: #fff;}
+    .toc { position: sticky; top: 0; background: var(--toc-bg); padding: .6em 1em; z-index: 3; border-radius: 12px; box-shadow:0 1px 4px #0001;}
+    .toc a { color: var(--primary); text-decoration: none; display: block; margin: .2em 0; transition:.2s;}
+    .toc a.active { font-weight: bold; text-decoration: underline; }
+    .controls { padding: 0.7em 1em 0.6em 1em; display: flex; gap: 1em; align-items: center; background: var(--toc-bg); flex-wrap:wrap; }
+    .pdf-toolbar { background: var(--toc-bg); padding:.4em 1em; border-bottom:1px solid var(--border); font-size:1.02em;}
+    .pdf-toolbar input, .pdf-toolbar button { margin-right: 0.4em; border-radius: 6px; border:1px solid var(--border);}
+    .pdf-toolbar input[type='number']{width:3.2em; text-align:center;}
+    .dark-toggle { cursor: pointer; background:none; border:none; font-size:1.1em; }
+    @media (max-width: 900px) {
+      .container { flex-direction: column;}
+      .left, .right { width: 100%; height: 50vh; }
+      .toc { font-size:1.05em;}
+    }
+    @media (max-width: 500px) {
+      .controls{flex-direction:column;gap:0.2em}
+      .left, .right { height: 56vw; }
+      body { font-size: 1.04em; }
+    }
+    /* 美化表格 */
+    table { border-collapse: collapse; margin:1em 0; width: 100%; background: #fcfcfc;}
+    th, td { border:1px solid var(--border); padding:.48em .75em; }
+    h1,h2,h3,h4 { color: var(--primary); }
+    .repo-link{text-decoration:underline;}
+    .night-mode-on{background: #191b22; color:#e8e8e8;}
+    .dl-btn{text-decoration:none;background:#f2f2f7;color:#222;border:1px solid #ccd; padding:.24em 1em; border-radius:7px;}
+  </style>
+</head>
+<body data-theme="light">
+  <div class="controls">
+    <button onclick="toggleTheme()" class="dark-toggle">🌙/☀️ 夜間模式</button>
+    <a class="dl-btn" href="user_ai_learning_notes.md" download>⬇️ 下載導讀.md</a>
+    <a class="dl-btn" href="AI-powered personalized learning- Enhancing self-efficacy, motivation, and digital literacy in adult education through expectancy-value theory.pdf" download>⬇️ 下載論文PDF</a>
+    <a class="repo-link" href="https://github.com/" target="_blank">GitHub Repo</a>
+  </div>
+  <div class="container">
+    <div class="left">
+      <nav class="toc" id="toc"></nav>
+      <div id="md-content" style="margin-top:1.5em"></div>
+    </div>
+    <div class="right">
+      <div class="pdf-toolbar" id="pdf-toolbar">
+        <button onclick="PDFViewer.prevPage()">⬅️</button>
+        <span id="pdf-page-info"></span>
+        <button onclick="PDFViewer.nextPage()">➡️</button>
+        <input type="number" id="page-input" min="1" style="width:3em">
+        <button onclick="PDFViewer.gotoPage()">跳轉</button>
+        <input type="text" id="pdf-search" placeholder="搜尋PDF">
+        <button onclick="PDFViewer.search()">🔍</button>
+      </div>
+      <iframe id="pdf-iframe" src="https://mozilla.github.io/pdf.js/web/viewer.html?file=AI-powered personalized learning- Enhancing self-efficacy, motivation, and digital literacy in adult education through expectancy-value theory.pdf" width="100%" height="94%" style="border:none"></iframe>
+    </div>
+  </div>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script>
+    // 夜間模式
+    function toggleTheme() {
+      document.body.dataset.theme = document.body.dataset.theme === "dark" ? "light" : "dark";
+    }
+    // 讀取md並渲染
+    fetch('user_ai_learning_notes.md')
+      .then(r => r.text())
+      .then(md => {
+        let html = marked.parse(md.replace('[toc]',''));
+        document.getElementById('md-content').innerHTML = html;
+        generateTOC();
+        markPageAnchors();
+      });
+    // TOC自動生成
+    function generateTOC() {
+      const content = document.getElementById('md-content');
+      const toc = document.getElementById('toc');
+      toc.innerHTML = '';
+      const headers = content.querySelectorAll('h1,h2,h3');
+      headers.forEach(h => {
+        let anchor = h.id || h.textContent.replace(/\s+/g,'-');
+        h.id = anchor;
+        let link = document.createElement('a');
+        link.href = '#' + anchor;
+        link.textContent = h.textContent;
+        link.style.marginLeft = h.tagName === 'H2' ? '1em' : (h.tagName === 'H3' ? '2em':'0');
+        link.onclick = () => {
+          document.getElementById(anchor).scrollIntoView({behavior:'smooth',block:'start'});
+        }
+        toc.appendChild(link);
+      });
+    }
+    // 根據 (p.x) 自動加data-page屬性
+    function markPageAnchors() {
+      const content = document.getElementById('md-content');
+      content.querySelectorAll('h1,h2,h3,h4,p,li').forEach(el => {
+        let match = el.textContent.match(/\(p\.(\d+)\)/);
+        if(match) el.setAttribute('data-page', match[1]);
+        el.style.cursor = match ? "pointer" : "";
+        if(match) el.onclick = () => PDFViewer.gotoPage(match[1]);
+      });
+    }
+    // PDF.js iframe 簡易API控制
+    const PDFViewer = {
+      iframe: document.getElementById('pdf-iframe'),
+      gotoPage(page) {
+        const pageNum = page || document.getElementById('page-input').value;
+        PDFViewer.iframe.contentWindow.postMessage({type:'page', page: parseInt(pageNum)}, '*');
+      },
+      prevPage() { PDFViewer.iframe.contentWindow.postMessage({type:'prev'}, '*'); },
+      nextPage() { PDFViewer.iframe.contentWindow.postMessage({type:'next'}, '*'); },
+      search() {
+        let term = document.getElementById('pdf-search').value;
+        PDFViewer.iframe.contentWindow.postMessage({type:'find', query: term}, '*');
+      }
+    };
+    // 監聽iframe回報頁碼
+    window.addEventListener('message', e => {
+      if(e.data && e.data.type==='page') {
+        document.getElementById('pdf-page-info').textContent = `第 ${e.data.page} 頁`;
+      }
+    });
+  </script>
+</body>
+</html>
