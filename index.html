@@ -5,31 +5,104 @@
   <title>AI個人化學習論文導讀雙欄</title>
   <meta name="viewport" content="width=1000, initial-scale=1.0">
   <style>
-    body {
-      margin: 0; background: #f8f8f8; color: #232323; font-family: "Noto Sans TC", sans-serif;
+    :root {
+      --primary: #1658ae;
+      --bg: #f8f8f8;
+      --bg-dark: #222531;
+      --text: #232323;
+      --text-dark: #e4e7ee;
+      --left-bg: #fff;
+      --left-bg-dark: #232634;
+      --border: #eee;
+      --border-dark: #454659;
     }
-    .container { display: flex; min-height: 100vh; }
-    .left { width: 28%; min-width:230px; background: #fff; border-right: 1px solid #eee; padding: 1.5em 1em 1em 2em; overflow-y:auto;}
-    .right { width: 72%; background: #f8f8f8; padding: 1.5em 2em 1em 2em; min-height: 100vh;}
-    .controls { padding: 1em 2em; background: #fff; display: flex; gap:1.2em; align-items:center;}
+    html, body {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: "Noto Sans TC", sans-serif;
+      transition: background 0.25s, color 0.25s;
+    }
+    body.dark {
+      --bg: var(--bg-dark);
+      --left-bg: var(--left-bg-dark);
+      --text: var(--text-dark);
+      --border: var(--border-dark);
+    }
+    .container {
+      display: flex;
+      height: 100vh;
+      min-height: 500px;
+    }
+    .left {
+      width: 28%;
+      min-width:220px;
+      background: var(--left-bg);
+      border-right: 1px solid var(--border);
+      padding: 1.5em 1em 1em 2em;
+      overflow-y: auto;
+      height: 100vh;
+      box-sizing: border-box;
+      transition: background 0.25s, color 0.25s;
+    }
+    .right {
+      width: 72%;
+      background: var(--bg);
+      padding: 1.5em 2em 1em 2em;
+      min-height: 100vh;
+      overflow-y: auto;
+      box-sizing: border-box;
+      transition: background 0.25s, color 0.25s;
+    }
+    .controls {
+      padding: 1em 2em;
+      background: var(--left-bg);
+      display: flex;
+      gap:1.2em; align-items:center;
+      border-bottom: 1px solid var(--border);
+    }
     .controls a, .controls button {
-      text-decoration: none; background: #eee; color: #232323; border: none; border-radius: 5px; padding: 0.42em 1.1em; font-size:1em; cursor:pointer;
+      text-decoration: none;
+      background: #eee;
+      color: #232323;
+      border: none;
+      border-radius: 5px;
+      padding: 0.42em 1.1em;
+      font-size:1em;
+      cursor:pointer;
+      transition: background 0.2s;
     }
-    .controls a:hover { background: #ddeeff;}
-    h1,h2,h3 { color: #1658ae; }
+    body.dark .controls a, body.dark .controls button {
+      background: #363b4b;
+      color: #f5f7fe;
+    }
+    .controls a:hover, .controls button:hover { background: #ddeeff;}
+    body.dark .controls a:hover, body.dark .controls button:hover { background: #2d3042; }
+    .toggle-dark {
+      font-size: 1.1em;
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      padding: 0 0.7em 0 0.5em;
+    }
+    h1,h2,h3 { color: var(--primary);}
+    body.dark h1, body.dark h2, body.dark h3 { color: #76b2ff; }
     .toc {margin-bottom:1.5em;}
-    .toc a { display: block; color: #1658ae; text-decoration: none; margin: 0.1em 0 0.1em 0.1em; padding-left: .5em;}
+    .toc a { display: block; color: var(--primary); text-decoration: none; margin: 0.1em 0 0.1em 0.1em; padding-left: .5em;}
     .toc a:hover, .toc a.active { font-weight:bold; text-decoration:underline;}
+    body.dark .toc a { color: #6eaaff;}
     @media (max-width: 900px) {
       .container { flex-direction:column;}
-      .left, .right { width: 100%; min-width:0; padding:1.2em 0.6em;}
-      .right { padding:1.2em 0.6em;}
+      .left, .right { width: 100%; min-width:0; padding:1.2em 0.6em; height:auto; min-height:0;}
       .controls { flex-direction:column; gap:0.3em; align-items:flex-start;}
     }
   </style>
 </head>
 <body>
   <div class="controls">
+    <button class="toggle-dark" id="toggle-dark" title="切換夜間模式">🌙/☀️</button>
     <a href="note.md" download>⬇️ 下載導讀.md</a>
     <a href="AI-powered personalized learning- Enhancing self-efficacy, motivation, and digital literacy in adult education through expectancy-value theory.pdf" target="_blank">📄 直接打開論文PDF</a>
     <a href="https://github.com/Lesly0512/paper" target="_blank">GitHub Repo</a>
@@ -45,11 +118,29 @@
   </div>
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <script>
-    // 讀取並渲染 md（這裡的檔名是 note.md！）
+    // 夜間模式
+    const root = document.body;
+    function setDark(dark) {
+      if(dark) {
+        root.classList.add('dark');
+        localStorage.setItem('theme','dark');
+      } else {
+        root.classList.remove('dark');
+        localStorage.setItem('theme','light');
+      }
+    }
+    document.getElementById('toggle-dark').onclick = function() {
+      setDark(!root.classList.contains('dark'));
+    };
+    // 自動記憶夜間模式
+    (() => {
+      const prefer = localStorage.getItem('theme');
+      if(prefer === 'dark') setDark(true);
+    })();
+    // 讀取並渲染 md
     fetch('note.md')
       .then(r => r.text())
       .then(md => {
-        // 移除[toc]再渲染
         let html = marked.parse(md.replace('[toc]', ''));
         document.getElementById('md-content').innerHTML = html;
         generateTOC();
